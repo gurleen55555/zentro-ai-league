@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabase";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -30,6 +31,8 @@ const TIMELINE = [
 
 function useAnimatedConfidence(isOpen: boolean) {
   const [value, setValue] = useState(0);
+  
+ 
 
   useEffect(() => {
     if (!isOpen) {
@@ -63,10 +66,28 @@ export function RevenueRiskAnalysisPanel({
   onClose: () => void;
 }) {
   const confidence = useAnimatedConfidence(isOpen);
+
+  const [risks, setRisks] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
 
 useEffect(() => {
   setMounted(true);
+}, []);
+ useEffect(() => {
+  async function fetchRisks() {
+    const { data, error } = await supabase
+      .from("revenue_risks")
+      .select("*");
+
+    if (error) {
+      console.error("Revenue risks error:", error);
+      return;
+    }
+    console.log("Fetched revenue risks:", data);
+    setRisks(data || []);
+  }
+
+  fetchRisks();
 }, []);
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -147,7 +168,7 @@ useEffect(() => {
                   Potential ARR impact
                 </p>
                 <p className="mt-1 text-xl font-semibold tabular-nums text-white">
-                  $42,000
+                  ${risks.reduce((sum, risk) => sum + Number(risk.impact_mrr || 0), 0).toLocaleString()}
                 </p>
               </div>
               <div className="rounded-xl border border-white/[0.06] bg-black/30 px-3 py-2.5">
@@ -172,9 +193,9 @@ useEffect(() => {
               Primary causes
             </h3>
             <ul className="mt-3 space-y-2">
-              {PRIMARY_CAUSES.map((cause) => (
+              {(risks.length > 0 ? risks.slice(0, 5).map((risk) => risk.description) : PRIMARY_CAUSES).map((cause, index) => (
                 <li
-                  key={cause}
+                  key={`${cause}-${index}`}
                   className="flex items-start gap-2.5 text-sm text-zinc-300"
                 >
                   <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-amber-400/90" />
@@ -189,7 +210,7 @@ useEffect(() => {
               Affected accounts
             </h3>
             <ul className="mt-3 space-y-2">
-              {AFFECTED_ACCOUNTS.map((account) => (
+              {(risks.length > 0 ? risks.slice(0, 5).map((risk) => risk.company) : AFFECTED_ACCOUNTS).map((account) => (
                 <li
                   key={account}
                   className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm font-medium text-zinc-200"

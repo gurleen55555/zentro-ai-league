@@ -429,8 +429,7 @@ function ExecutiveAlertBanner({
               Revenue risk detected
             </h3>
             <p className="mt-1 text-sm text-zinc-400">
-              3 enterprise accounts have reduced engagement by{" "}
-              <span className="font-semibold text-amber-200/90">41%</span>.
+              Revenue risks detected across customer accounts based on live business signals.
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <div className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2">
@@ -438,7 +437,7 @@ function ExecutiveAlertBanner({
                   Potential ARR at risk
                 </p>
                 <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">
-                  $42,000
+                  Live risk analysis
                 </p>
               </div>
               <div className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2">
@@ -631,7 +630,7 @@ export function LeadIntelligenceAgent() {
   const [alertVisible, setAlertVisible] = useState(true);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
-  const [filter, setFilter] = useState<"all" | "hot" | "warm" | "cold">("all");
+  const [showAllLeads, setShowAllLeads] = useState(false);
   useEffect(() => {
   async function fetchLeads() {
     const { data, error } = await supabase
@@ -735,24 +734,22 @@ export function LeadIntelligenceAgent() {
         </div>
 
         <div className="relative space-y-3 px-5 pb-5 sm:px-7 sm:pb-6">
-          {[...leads]
-  .sort((a, b) => {
-    const priorityOrder: Record<string, number> = {
-      hot: 1,
-      urgent: 1,
-      warm: 2,
-      cold: 3,
-      nurture: 3,
-    };
-
-    return (
-      (priorityOrder[a.status ?? a.priority] ?? 4) -
-      (priorityOrder[b.status ?? b.priority] ?? 4)
-    );
-  })
+          {leads
+  .slice(0, showAllLeads ? leads.length : 7)
   .map((lead) => (
-            <LeadRow key={lead.id} lead={lead} />
-          ))}
+    <LeadRow key={lead.id} lead={lead} />
+  ))}
+  {leads.length > 7 && (
+  <div className="mt-5 flex justify-center">
+    <button
+      type="button"
+      onClick={() => setShowAllLeads((prev) => !prev)}
+      className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-5 py-2.5 text-sm font-medium text-violet-200 transition hover:bg-violet-500/20"
+    >
+      {showAllLeads ? "Show less" : "Show more leads"}
+    </button>
+  </div>
+)}
         </div>
 
         <div className="relative border-t border-white/[0.06] px-5 py-4 sm:px-7">
