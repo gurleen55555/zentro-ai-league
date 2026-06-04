@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 import { RevenueRiskAnalysisPanel } from "@/components/RevenueRiskAnalysisPanel";
 import {
   AlertTriangle,
@@ -477,7 +478,10 @@ function ExecutiveAlertBanner({
 
 function LeadRow({ lead }: { lead: Lead }) {
   const [expanded, setExpanded] = useState(false);
-  const p = PRIORITY_STYLES[lead.priority];
+  const leadPriority: Priority =
+  lead.priority ?? (lead.status === "hot" ? "urgent" : lead.status === "cold" ? "nurture" : "warm");
+
+const p = PRIORITY_STYLES[leadPriority];
 
   return (
     <div
@@ -509,22 +513,24 @@ function LeadRow({ lead }: { lead: Lead }) {
                 {p.label}
               </span>
             </div>
-            <p className="mt-1 text-sm text-zinc-500">{lead.industry}</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              {lead.industry ?? lead.company ?? "B2B SaaS"}
+            </p>
 
             <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <p className="text-zinc-600">Probability to close</p>
                 <p className="mt-0.5 font-semibold tabular-nums text-zinc-200">
-                  {lead.probabilityToClose}%
+                  {lead.probabilityToClose ?? Math.max(20, Math.min(95, lead.score - 10))}%
                 </p>
               </div>
               <div>
                 <p className="text-zinc-600">Company size</p>
-                <p className="mt-0.5 text-zinc-300">{lead.companySize}</p>
+                <p className="mt-0.5 text-zinc-300">{lead.companySize ?? "100–500 employees"}</p>
               </div>
               <div className="sm:col-span-2">
                 <p className="text-zinc-600">Last interaction</p>
-                <p className="mt-0.5 text-zinc-300">{lead.lastInteraction}</p>
+                <p className="mt-0.5 text-zinc-300">{lead.lastInteraction ?? "Recently added to CRM"}</p>
               </div>
             </div>
           </div>
@@ -559,7 +565,7 @@ function LeadRow({ lead }: { lead: Lead }) {
                     Why this lead is ranked highly
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-                    {lead.explain.whyRanked}
+                    {lead.explain?.whyRanked ?? `${lead.name} is ranked based on CRM score, engagement signals, and current buying intent.`}
                   </p>
                 </div>
                 <div>
@@ -567,7 +573,13 @@ function LeadRow({ lead }: { lead: Lead }) {
                     Signals detected
                   </p>
                   <ul className="mt-2 space-y-1.5">
-                    {lead.explain.signals.map((signal) => (
+                    {(
+  lead.explain?.signals ?? [
+    `Lead score: ${lead.score}`,
+    `Status: ${lead.status}`,
+    `Company: ${lead.company ?? "Unknown"}`,
+  ]
+).map((signal) => (
                       <li
                         key={signal}
                         className="flex items-start gap-2 text-sm text-zinc-400"
@@ -583,14 +595,29 @@ function LeadRow({ lead }: { lead: Lead }) {
                     Recommended next action
                   </p>
                   <p className="mt-2 rounded-xl border border-white/[0.06] bg-white/[0.03] p-3 text-sm leading-relaxed text-zinc-200">
-                    {lead.explain.nextAction}
+                    {lead.explain?.nextAction ?? "Prioritize outreach based on lead score and engagement status."}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-5 lg:col-span-5">
-                <ConfidenceVisualization confidence={lead.explain.confidence} />
-                <ActivityTimeline items={lead.activity} />
+                <ConfidenceVisualization confidence={lead.explain?.confidence ?? lead.score ?? 75} />
+                <ActivityTimeline
+  items={
+    lead.activity ?? [
+      {
+        time: "Today",
+        label: `Lead imported from Supabase with ${lead.status} status`,
+        icon: "user",
+      },
+      {
+        time: "Recent",
+        label: `AI score calculated as ${lead.score}`,
+        icon: "eye",
+      },
+    ]
+  }
+/>
               </div>
             </div>
           </div>
@@ -603,6 +630,24 @@ function LeadRow({ lead }: { lead: Lead }) {
 export function LeadIntelligenceAgent() {
   const [alertVisible, setAlertVisible] = useState(true);
   const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [filter, setFilter] = useState<"all" | "hot" | "warm" | "cold">("all");
+  useEffect(() => {
+  async function fetchLeads() {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+    console.log("Fetched leads from Supabase:", data);
+    setLeads(data || []);
+  }
+
+  fetchLeads();
+}, []);
   const urgentCount = LEADS.filter((l) => l.priority === "urgent").length;
   const avgScore = Math.round(
     LEADS.reduce((s, l) => s + l.score, 0) / LEADS.length,
@@ -642,7 +687,7 @@ export function LeadIntelligenceAgent() {
                   Active leads
                 </p>
                 <p className="text-lg font-semibold tabular-nums text-white">
-                  {LEADS.length}
+                  {leads.length}
                 </p>
               </div>
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.05]">
@@ -690,7 +735,22 @@ export function LeadIntelligenceAgent() {
         </div>
 
         <div className="relative space-y-3 px-5 pb-5 sm:px-7 sm:pb-6">
-          {LEADS.map((lead) => (
+          {[...leads]
+  .sort((a, b) => {
+    const priorityOrder: Record<string, number> = {
+      hot: 1,
+      urgent: 1,
+      warm: 2,
+      cold: 3,
+      nurture: 3,
+    };
+
+    return (
+      (priorityOrder[a.status ?? a.priority] ?? 4) -
+      (priorityOrder[b.status ?? b.priority] ?? 4)
+    );
+  })
+  .map((lead) => (
             <LeadRow key={lead.id} lead={lead} />
           ))}
         </div>
