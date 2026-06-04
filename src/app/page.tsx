@@ -27,7 +27,7 @@ import { useEffect, useState } from "react";
 import { CompanyKnowledgeGraph } from "@/components/CompanyKnowledgeGraph";
 import { CompanyBrainChat } from "@/components/CompanyBrainChat";
 import { LeadIntelligenceAgent } from "@/components/LeadIntelligenceAgent";
-
+import { ExecutiveInsightsAgent } from "@/components/ExecutiveInsightsAgent";
 const metrics = [
   {
     label: "Company Health Score",
@@ -486,7 +486,7 @@ export default function Home() {
             </div>
           </div>
         </header>
-
+        <ExecutiveInsightsAgent />
         <CompanyBrainChat suggestedPrompts={suggestedPrompts} />
 
         <LeadIntelligenceAgent />
