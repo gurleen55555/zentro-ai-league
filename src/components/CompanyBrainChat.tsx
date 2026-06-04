@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabase";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Brain,
@@ -205,6 +206,81 @@ function buildMockAnswer(prompt: string): {
   };
 }
 
+function buildLiveAnswer(
+  prompt: string,
+  stats: {
+    leads: number;
+    hotLeads: number;
+    customers: number;
+    riskImpact: number;
+  },
+): {
+  confidence: number;
+  sources: Source[];
+  text: string;
+} {
+  const p = normalize(prompt);
+
+  if (p.includes("how many leads") || p.includes("total leads")) {
+    return {
+      confidence: 94,
+      sources: ["CRM"],
+      text: [
+        "Executive Summary",
+        `- Zentro currently has ${stats.leads} leads in the CRM.`,
+        `- ${stats.hotLeads} of them are high-intent hot leads.`,
+        "",
+        "Recommended Actions",
+        "- Prioritize hot leads first and route them for follow-up within 48 hours.",
+      ].join("\n"),
+    };
+  }
+
+  if (p.includes("hot leads") || p.includes("highest priority leads")) {
+    return {
+      confidence: 92,
+      sources: ["CRM", "Email"],
+      text: [
+        "Executive Summary",
+        `- There are ${stats.hotLeads} hot leads showing strong buying intent.`,
+        "",
+        "Recommended Actions",
+        "- Focus outreach on high-score leads and attach tailored ROI or security material.",
+      ].join("\n"),
+    };
+  }
+
+  if (p.includes("customers")) {
+    return {
+      confidence: 91,
+      sources: ["CRM"],
+      text: [
+        "Executive Summary",
+        `- Zentro is currently tracking ${stats.customers} active customers.`,
+        "",
+        "Recommended Actions",
+        "- Review customer health and prioritize accounts showing churn or contraction signals.",
+      ].join("\n"),
+    };
+  }
+
+  if (p.includes("risk") || p.includes("revenue exposure") || p.includes("revenue risk")) {
+    return {
+      confidence: 93,
+      sources: ["CRM", "Support"],
+      text: [
+        "Executive Summary",
+        `- Current revenue exposure is $${stats.riskImpact.toLocaleString()}.`,
+        "",
+        "Recommended Actions",
+        "- Prioritize high-severity accounts and schedule executive outreach within 48 hours.",
+      ].join("\n"),
+    };
+  }
+
+  return buildMockAnswer(prompt);
+}
+
 function SourceBadge({ source }: { source: Source }) {
   const meta = useMemo(() => {
     switch (source) {
@@ -235,6 +311,12 @@ export function CompanyBrainChat({
   suggestedPrompts: readonly string[];
 }) {
   const [input, setInput] = useState("");
+  const [stats, setStats] = useState({
+  leads: 0,
+  hotLeads: 0,
+  customers: 0,
+  riskImpact: 0,
+});
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: uid(),
@@ -275,6 +357,27 @@ export function CompanyBrainChat({
       if (stageTimeoutRef.current) window.clearTimeout(stageTimeoutRef.current);
     };
   }, []);
+  useEffect(() => {
+  async function fetchStats() {
+    const { data: leads } = await supabase.from("leads").select("*");
+    const { data: customers } = await supabase.from("customers").select("*");
+    const { data: risks } = await supabase.from("revenue_risks").select("*");
+
+    setStats({
+      leads: leads?.length || 0,
+      hotLeads:
+        leads?.filter((lead) => lead.status === "hot").length || 0,
+      customers: customers?.length || 0,
+      riskImpact:
+        risks?.reduce(
+          (sum, risk) => sum + Number(risk.impact_mrr || 0),
+          0,
+        ) || 0,
+    });
+  }
+
+  fetchStats();
+}, []);
 
   function pushUserMessage(text: string) {
     const trimmed = text.trim();
@@ -311,7 +414,7 @@ export function CompanyBrainChat({
       );
     }, 900);
 
-    const answer = buildMockAnswer(prompt);
+    const answer = buildLiveAnswer(prompt, stats);
     stageTimeoutRef.current = window.setTimeout(() => {
       if (stageIntervalRef.current) window.clearInterval(stageIntervalRef.current);
 
