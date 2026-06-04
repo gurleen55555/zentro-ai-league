@@ -1,4 +1,6 @@
 "use client";
+import { supabase } from "@/lib/supabase";
+
 
 import {
   Activity,
@@ -209,6 +211,7 @@ function StatusPill({
   children: React.ReactNode;
 }) {
   return (
+    
     <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-zinc-300 backdrop-blur-xl">
       <span className="relative flex h-2 w-2">
         <span
@@ -222,13 +225,31 @@ function StatusPill({
 }
 
 export default function Home() {
+  
+
+  
+  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("Supabase Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const [liveCounters, setLiveCounters] = useState<number[]>(() =>
     heroCounterSeeds.map((item) => item.value),
   );
   const [aiConfidence, setAiConfidence] = useState(91);
   const [agentFeedIndex, setAgentFeedIndex] = useState(0);
+  const [businesses, setBusinesses] = useState<any[]>([]);
 
   useEffect(() => {
+    supabase
+    .from("businesses")
+    .select("*")
+    .then(({ data, error }) => {
+      console.log("Businesses:", data);
+      console.log("Supabase Error:", error);
+
+      if (data) {
+        setBusinesses(data);
+      }
+    });
+
     const counterTimer = window.setInterval(() => {
       setLiveCounters((prev) =>
         prev.map((num, idx) => {
@@ -333,6 +354,7 @@ export default function Home() {
       </nav>
 
       <main className="relative mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+      
         {/* HERO — AI Operating System */}
         <header className="relative mb-12 overflow-hidden rounded-[1.75rem] border border-white/[0.05] bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-8 lg:p-10">
           <div className="pointer-events-none absolute inset-0">

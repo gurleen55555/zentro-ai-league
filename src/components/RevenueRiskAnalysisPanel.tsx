@@ -63,7 +63,11 @@ export function RevenueRiskAnalysisPanel({
   onClose: () => void;
 }) {
   const confidence = useAnimatedConfidence(isOpen);
+  const [mounted, setMounted] = useState(false);
 
+useEffect(() => {
+  setMounted(true);
+}, []);
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -81,8 +85,8 @@ export function RevenueRiskAnalysisPanel({
     };
   }, [isOpen, handleKeyDown]);
 
-  if (typeof document === "undefined") return null;
-
+  //if (typeof document === "undefined") return null;
+  if (!mounted) return null;
   return createPortal(
     <>
       {/* Backdrop */}
