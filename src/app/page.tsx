@@ -229,8 +229,7 @@ export default function Home() {
   
 
   
-  console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("Supabase Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  
   const [liveCounters, setLiveCounters] = useState<number[]>(() =>
     heroCounterSeeds.map((item) => item.value),
   );
