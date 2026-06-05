@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 const VIOLET = "#8B5CF6";
 const CYAN = "#06B6D4";
 const EMERALD = "#10B981";
@@ -159,6 +161,30 @@ function SourceNode({ node }: { node: (typeof SOURCES)[number] }) {
 }
 
 export function CompanyKnowledgeGraph() {
+  const [stats, setStats] = useState({
+  leads: 0,
+  customers: 0,
+  meetings: 0,
+  risks: 0,
+});
+
+useEffect(() => {
+  async function fetchStats() {
+    const { data: leads } = await supabase.from("leads").select("*");
+    const { data: customers } = await supabase.from("customers").select("*");
+    const { data: meetings } = await supabase.from("meetings").select("*");
+    const { data: risks } = await supabase.from("revenue_risks").select("*");
+
+    setStats({
+      leads: leads?.length || 0,
+      customers: customers?.length || 0,
+      meetings: meetings?.length || 0,
+      risks: risks?.length || 0,
+    });
+  }
+
+  fetchStats();
+}, []);
   return (
     <div className="relative h-full min-h-[320px] w-full sm:min-h-[380px]">
       {/* Glass container */}
@@ -358,35 +384,41 @@ export function CompanyKnowledgeGraph() {
           />
         </circle>
       </svg>
+<div className="absolute bottom-0 left-0 right-0 z-10 border-t border-white/[0.05] bg-[#0A0A0A]/30 px-4 py-3 backdrop-blur-md">
+  <p className="text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-500">
+    Unified intelligence layer
+  </p>
 
-      <div className="absolute bottom-0 left-0 right-0 z-10 border-t border-white/[0.05] bg-[#0A0A0A]/30 px-4 py-3 backdrop-blur-md">
-        <p className="text-center text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-500">
-          Unified intelligence layer
-        </p>
-        <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-zinc-600">
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: CYAN, boxShadow: `0 0 8px ${CYAN}80` }}
-            />
-            Data streams
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: VIOLET, boxShadow: `0 0 8px ${VIOLET}80` }}
-            />
-            AI core
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: EMERALD, boxShadow: `0 0 8px ${EMERALD}80` }}
-            />
-            Confidence
-          </span>
-        </div>
-      </div>
+  <div className="mt-3 grid grid-cols-4 gap-3 text-center">
+    <div>
+      <p className="text-lg font-semibold text-white">{stats.leads}</p>
+      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+        Leads
+      </p>
     </div>
-  );
+
+    <div>
+      <p className="text-lg font-semibold text-white">{stats.customers}</p>
+      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+        Customers
+      </p>
+    </div>
+
+    <div>
+      <p className="text-lg font-semibold text-white">{stats.meetings}</p>
+      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+        Meetings
+      </p>
+    </div>
+
+    <div>
+      <p className="text-lg font-semibold text-white">{stats.risks}</p>
+      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+        Risks
+      </p>
+    </div>
+  </div>
+</div>
+</div>
+);
 }

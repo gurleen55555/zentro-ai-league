@@ -28,6 +28,7 @@ import { CompanyKnowledgeGraph } from "@/components/CompanyKnowledgeGraph";
 import { CompanyBrainChat } from "@/components/CompanyBrainChat";
 import { LeadIntelligenceAgent } from "@/components/LeadIntelligenceAgent";
 import { ExecutiveInsightsAgent } from "@/components/ExecutiveInsightsAgent";
+import { MeetingIntelligenceAgent } from "@/components/MeetingIntelligenceAgent";
 const metrics = [
   {
     label: "Company Health Score",
@@ -490,6 +491,7 @@ export default function Home() {
         <CompanyBrainChat suggestedPrompts={suggestedPrompts} />
 
         <LeadIntelligenceAgent />
+        <MeetingIntelligenceAgent />
 
         {/* Analytics (still present, not the focus) */}
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
