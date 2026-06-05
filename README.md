@@ -97,6 +97,10 @@ Zentro AI solves these challenges through a unified intelligence layer.
 
 ## System Architecture
 
+![Zentro AI Architecture](./public/architecture-diagram.png)
+
+The architecture consists of a unified intelligence layer powered by specialized AI agents, Supabase as the central data layer, and a Next.js frontend delivering executive insights, revenue intelligence, meeting intelligence, and operational decision support.
+
 Data Sources
 ↓
 CRM | Meetings | Support | Finance | Leads
@@ -114,7 +118,18 @@ Knowledge Graph
 ↓
 Executive Dashboard
 
+
 ---
+
+## Demo Highlights
+
+- Executive Insights Dashboard
+- Lead Intelligence Agent
+- Revenue Risk Analysis Agent
+- Company Brain Chat
+- Meeting Intelligence Agent
+- Knowledge Graph Visualization
+- Real-time Supabase Integration
 
 ## Installation
 
